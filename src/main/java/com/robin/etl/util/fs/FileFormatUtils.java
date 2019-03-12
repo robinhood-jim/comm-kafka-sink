@@ -83,8 +83,8 @@ public class FileFormatUtils {
         List<String> retList=new ArrayList<>();
         if(fileNameStartPos==-1)
             fileNameStartPos=0;
-        String fileName=path.substring(fileNameStartPos,path.length());
-        String[] arr=fileName.split(".");
+        String fileName=path.substring(fileNameStartPos+1,path.length());
+        String[] arr=fileName.split("\\.");
         for(int j=arr.length-1;j>0;j--){
             retList.add(arr[j]);
         }

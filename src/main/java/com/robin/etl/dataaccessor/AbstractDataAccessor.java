@@ -37,7 +37,7 @@ public abstract class AbstractDataAccessor {
     public abstract void writeRecords(List<Map<String,Object>> list) throws Exception;
     public abstract void flush() throws Exception;
 
-    protected abstract void initDataWriter();
+    protected abstract void initDataWriter() throws Exception;
 
     public Map<String, Object> getParamCfgMap() {
         return paramCfgMap;

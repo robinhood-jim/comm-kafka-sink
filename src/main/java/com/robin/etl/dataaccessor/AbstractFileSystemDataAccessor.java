@@ -65,17 +65,27 @@ public abstract class AbstractFileSystemDataAccessor extends AbstractDataAccesso
         if (outFileFormat != null) {
             paramCfgMap.put("outFileFormat", outFileFormat);
         }
-        initDataWriter();
-        constructMeta();
+
+
         try {
-            outputStream = getOutputStreamBySuffix(compressType, getRawOutputStream());
+            constructMeta();
+            initDataWriter();
         } catch (Exception ex) {
             logger.error("", ex);
         }
     }
 
-    protected void initDataWriter() {
+    protected void initDataWriter() throws Exception {
         writer = TextFileWriterFactory.getFileWriterByType(outFileFormat, colmeta, outputStream);
+        writer.beginWrite();
+    }
+    public void beginWrite(){
+        try{
+            outputStream = getOutputStreamBySuffix(compressType, getRawOutputStream());
+        }catch (Exception ex){
+            logger.error("{}",ex);
+        }
+
     }
 
     public void flush() throws Exception {
@@ -118,6 +128,7 @@ public abstract class AbstractFileSystemDataAccessor extends AbstractDataAccesso
         fields.forEach(field -> {
             addField(field);
         });
+        colmeta.setPath(filePath);
     }
 
     private void addField(Schema.Field field) {

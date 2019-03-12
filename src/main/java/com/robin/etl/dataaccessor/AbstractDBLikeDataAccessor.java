@@ -48,7 +48,7 @@ public abstract class AbstractDBLikeDataAccessor extends AbstractDataAccessor {
         }
     }
     @Override
-    protected void initDataWriter() {
+    protected void initDataWriter() throws Exception {
 
     }
 

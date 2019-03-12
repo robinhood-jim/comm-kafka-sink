@@ -44,6 +44,9 @@ public class HdfsUtils {
     public boolean exists(String path) throws IOException {
         return getFs().exists(new Path(path));
     }
+    public static boolean exists(Configuration conf, String path) throws IOException {
+        return getFs(conf).exists(new Path(path));
+    }
 
     public FSDataOutputStream createFile(String path) throws IOException {
         return getFs().create(new Path(path));
@@ -136,22 +139,10 @@ public class HdfsUtils {
         return FileSystem.get(configuration).mkdirs(new Path(path));
     }
     public boolean mv(String source,String target,boolean containLastName) throws IOException{
-        checkAndCreatePath(target,containLastName);
+        checkAndCreatePath(getConf(),target,containLastName);
         return getFs().rename(new Path(source),new Path(target));
     }
-    public boolean checkAndCreatePath(String path,boolean includeThis) throws IOException{
-        File fpath=new File(path);
 
-        List<String> arr= Arrays.asList(path.split("/",-1));
-        int endPos=includeThis?arr.size():arr.size()-1;
-        for(int i=1;i<endPos;i++){
-            String tmppath= StringUtils.join(arr.subList(1,i+1),"/");
-            if(!exists("/"+tmppath)){
-                mkdir("/"+tmppath);
-            }
-        }
-        return true;
-    }
     public static boolean mv(Configuration configuration, String source,String target) throws IOException{
         return FileSystem.get(configuration).rename(new Path(source),new Path(target));
     }
@@ -175,10 +166,23 @@ public class HdfsUtils {
         }
         return fit;
     }
+    public static boolean checkAndCreatePath(Configuration configuration,String path,boolean includeThis) throws IOException{
+        File fpath=new File(path);
+
+        List<String> arr= Arrays.asList(path.split("/",-1));
+        int endPos=includeThis?arr.size():arr.size()-1;
+        for(int i=1;i<endPos;i++){
+            String tmppath= StringUtils.join(arr.subList(1,i+1),"/");
+            if(!exists(configuration,"/"+tmppath)){
+                mkdir(configuration,"/"+tmppath);
+            }
+        }
+        return true;
+    }
     public static void main(String[] args){
         HdfsUtils utils=new HdfsUtils("hdfs://master1.cloud.123cx.com:8020");
         try {
-            utils.checkAndCreatePath("/tmp/luoming/testout1/time_year=2019/time_month=1/time_day=1",true);
+            utils.checkAndCreatePath(utils.getConf(),"/tmp/luoming/testout1/time_year=2019/time_month=1/time_day=1",true);
         }catch (Exception ex){
             ex.printStackTrace();
         }

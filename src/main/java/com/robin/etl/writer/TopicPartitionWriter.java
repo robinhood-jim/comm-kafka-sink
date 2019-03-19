@@ -28,7 +28,6 @@ import java.util.*;
 public class TopicPartitionWriter {
 
     private Map<String, Long> offsetsMap;
-    private String partitonColumn;
     private TopicPartition topicPartition;
     private Queue<Pair<Long, Map<String, Object>>> queue = new LinkedList<>();
     private Map<String, AbstractDataAccessor> dataAccessorMap = new HashMap<>();
@@ -39,7 +38,6 @@ public class TopicPartitionWriter {
     private String compressType;
     private String outputFormat;
     private HdfsUtils utils;
-    private Configuration conf;
     private int flushTimespan = 3600;
     private long lastTs;
     private boolean stopTag = false;
@@ -51,21 +49,19 @@ public class TopicPartitionWriter {
     private int maxFileRows = 10000;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private Map<String, Long> timeRangeTsMap = new HashMap<>();
-    private Map<String, Object> paramCfgMap=new HashMap<>();
+    private Map<String, Object> paramCfgMap;
     private String sinkType;
 
 
     public TopicPartitionWriter(Schema schema, TopicPartition topicPartition,Map<String,Object> paramMap,Configuration conf) {
         this.paramCfgMap=paramMap;
         this.topicPartition = topicPartition;
-        this.partitonColumn =paramMap.get("partitionColumn").toString();
         this.outputTmpPath = paramMap.get("outputTmpPath").toString();
         this.outputPath = paramMap.get("outputPath").toString();;
-        this.offsetPath = offsetPath;
+        this.offsetPath = paramMap.get("offsetPath").toString();
         this.partitionKeys = (String[])paramMap.get("partitionKeys");
         this.compressType = paramMap.get("compressType").toString();
         this.outputFormat = paramMap.get("outputFormat").toString();
-        this.conf = conf;
         utils = new HdfsUtils(conf);
         offsetsMap = new HashMap<>();
         lastTs = System.currentTimeMillis();
@@ -153,7 +149,8 @@ public class TopicPartitionWriter {
     private void checkFile(String partitionKey) {
         if (dataAccessorMap.get(partitionKey) == null) {
             Pair<String, String> pair = generateTempRandomFile(partitionKey);
-            logger.error("--write to {}", outputTmpPath + pair.getKey() + pair.getValue());
+            if(logger.isDebugEnabled())
+                logger.debug("--write to {}", outputTmpPath + pair.getKey() + pair.getValue());
             paramCfgMap.put("outputFile", outputTmpPath + pair.getKey() + pair.getValue());
             AbstractDataAccessor accessor = getDataAccessor();
             dataAccessorMap.put(partitionKey, accessor);
@@ -162,7 +159,8 @@ public class TopicPartitionWriter {
     }
 
     private void flushAndClose() throws Exception {
-        logger.info("--begin to flush--");
+        if(logger.isDebugEnabled())
+            logger.debug("--begin to flush--");
         if (!dataAccessorMap.isEmpty()) {
             Iterator<Map.Entry<String, AbstractDataAccessor>> iter = dataAccessorMap.entrySet().iterator();
             Long offset = 0L;
@@ -170,14 +168,12 @@ public class TopicPartitionWriter {
             while (iter.hasNext()) {
                 Map.Entry<String, AbstractDataAccessor> entry = iter.next();
                 Pair<String, String> pair = generateTempRandomFile(entry.getKey());
-                if(entry.getValue() instanceof AbstractDBLikeDataAccessor)
+                if(entry.getValue() instanceof AbstractDBLikeDataAccessor) {
                     entry.getValue().flush();
+                }
                 else if(entry.getValue() instanceof AbstractFileSystemDataAccessor){
                     ((AbstractFileSystemDataAccessor)entry.getValue()).flushAndClose();
-                }
-
-                //File type Data Accessor need to move tmp file to production
-                if (entry.getValue() instanceof AbstractFileSystemDataAccessor) {
+                    //File type Data Accessor need to move tmp file to production
                     ((AbstractFileSystemDataAccessor) entry.getValue()).moveTmpFileToProd(outputTmpPath + fileMap.get(entry.getKey()).getKey() + fileMap.get(entry.getKey()).getValue(),
                             outputPath + fileMap.get(entry.getKey()).getKey() + fileMap.get(entry.getKey()).getValue());
                 }

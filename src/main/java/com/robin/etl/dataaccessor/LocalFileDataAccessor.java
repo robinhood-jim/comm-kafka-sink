@@ -44,6 +44,11 @@ public class LocalFileDataAccessor extends AbstractFileSystemDataAccessor {
     }
 
     @Override
+    protected void checkPathExist() throws IOException{
+        FileUtil.checkAndCreatePath(filePath,false);
+    }
+
+    @Override
     public void moveTmpFileToProd(String tmpFile, String targetFile) throws IOException {
         FileUtils.moveFile(new File(tmpFile),new File(targetFile));
     }

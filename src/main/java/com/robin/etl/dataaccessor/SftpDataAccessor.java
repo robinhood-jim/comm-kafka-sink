@@ -36,7 +36,10 @@ public class SftpDataAccessor extends AbstractFileSystemDataAccessor {
 
     }
 
+    @Override
+    protected void checkPathExist() throws IOException{
 
+    }
 
     @Override
     public void writeRecord(Map<String, Object> map) {

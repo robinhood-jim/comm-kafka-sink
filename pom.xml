@@ -14,7 +14,6 @@
 			<id>confluent</id>
 			<url>http://packages.confluent.io/maven/</url>
 		</repository>
-
 	</repositories>
 	<properties>
 		<java.version>1.8</java.version>
@@ -233,6 +232,7 @@
 			<artifactId>commons-compress</artifactId>
 			<version>${compress.version}</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>

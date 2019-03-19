@@ -31,7 +31,10 @@ public class HdfsDataAccessor extends AbstractFileSystemDataAccessor {
         utils=new HdfsUtils(configuration);
     }
 
-
+    @Override
+    protected void checkPathExist() throws IOException {
+        HdfsUtils.checkAndCreatePath(this.configuration, this.filePath, false);
+    }
 
     @Override
     protected OutputStream getRawOutputStream() throws IOException {

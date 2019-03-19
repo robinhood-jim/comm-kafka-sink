@@ -61,7 +61,7 @@ public class CommKafkaPartitionSink implements Callable<Integer> {
     private Logger log= LoggerFactory.getLogger(getClass());
     private boolean stopTag=false;
     private Gson gson = GsonUtil.getGson();
-    private int maxFileRows =1000;
+    private int maxFileRows =20;
     private SimpleDateFormat format=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private SimpleDateFormat transFormat=new SimpleDateFormat("yyyyMMdd");
     private int pollSeconds=10;

@@ -1,10 +1,12 @@
 package com.robin.etl.dataaccessor;
 
+import com.robin.comm.fileaccess.writer.ParquetFileWriter;
 import com.robin.core.base.util.Const;
 import com.robin.core.fileaccess.meta.DataCollectionMeta;
 import com.robin.core.fileaccess.writer.AbstractFileWriter;
 import com.robin.core.fileaccess.writer.TextFileWriterFactory;
 import com.robin.etl.util.fs.FileFormatUtils;
+import com.robin.etl.util.fs.HdfsUtils;
 import net.jpountz.lz4.LZ4BlockOutputStream;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
@@ -77,11 +79,13 @@ public abstract class AbstractFileSystemDataAccessor extends AbstractDataAccesso
 
     protected void initDataWriter() throws Exception {
         writer = TextFileWriterFactory.getFileWriterByType(outFileFormat, colmeta, outputStream);
-        writer.beginWrite();
     }
     public void beginWrite(){
         try{
-            outputStream = getOutputStreamBySuffix(compressType, getRawOutputStream());
+            checkPathExist();
+            writer.beginWrite();
+            if(!(writer instanceof ParquetFileWriter))
+                outputStream = getOutputStreamBySuffix(compressType, getRawOutputStream());
         }catch (Exception ex){
             logger.error("{}",ex);
         }
@@ -102,6 +106,9 @@ public abstract class AbstractFileSystemDataAccessor extends AbstractDataAccesso
 
     public void flushAndClose() throws Exception {
         if (writer != null) {
+            if(logger.isDebugEnabled())
+                logger.debug("--begin flush and close--");
+            writer.finishWrite();
             writer.flush();
             writer.close();
         }
@@ -120,6 +127,7 @@ public abstract class AbstractFileSystemDataAccessor extends AbstractDataAccesso
     }
 
     protected abstract OutputStream getRawOutputStream() throws IOException;
+    protected abstract void checkPathExist() throws IOException;
 
     protected void constructMeta() {
         colmeta = new DataCollectionMeta();
@@ -132,7 +140,7 @@ public abstract class AbstractFileSystemDataAccessor extends AbstractDataAccesso
     }
 
     private void addField(Schema.Field field) {
-        Schema.Type seltype = null;
+        Schema.Type seltype;
         if (field.schema().getType() == Schema.Type.UNION && field.schema().getTypes() != null && !field.schema().getTypes().isEmpty()) {
             seltype = field.schema().getTypes().get(0).getType();
         } else {
